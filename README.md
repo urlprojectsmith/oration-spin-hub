@@ -18,7 +18,7 @@ Full-stack gamified spin wheel app for office employee selection, built with Nod
 
 ### Docker Compose
 
-Run the frontend and backend containers against the live PostgreSQL database:
+Run the full stack locally with PostgreSQL, backend, and frontend:
 
 ```bash
 docker compose up --build
@@ -26,8 +26,9 @@ docker compose up --build
 
 Frontend: `http://localhost:5173`
 Backend: `http://localhost:4000`
+PostgreSQL: `localhost:5432` (inside compose service: `database:5432`)
 
-The backend connects to the live PostgreSQL host configured in `compose.yaml`, loads the schema on first startup, and seeds demo users/employees before starting.
+The local database schema is loaded from `database/schema.sql` on first startup, and the backend applies runtime schema + seed data when it starts.
 
 To stop the stack:
 
