@@ -130,3 +130,53 @@ Webhook payloads include `X-Oration-Event`; if a secret is configured they also 
 - Use HTTPS and a managed PostgreSQL service in production.
 - Run `database/schema.sql` through your migration tool before deployment.
 - Restrict CORS with `CORS_ORIGIN`. For this deployment, use `http://localhost:5173,https://orationarena.urlfactory.website`.
+
+## Maintenance Workflow
+
+Use this when you edit the app, push changes to GitHub, and update the VPS.
+
+### 1. Edit locally
+
+Make your code change in the workspace, then validate the touched files if needed.
+
+### 2. Commit and push to GitHub
+
+```bash
+git status
+git add .
+git commit -m "Describe your change"
+git push
+```
+
+If you only want to push one file or a small set of files, replace `git add .` with the file paths you changed.
+
+### 3. Pull on the VPS
+
+On the VPS, go to the project folder and pull the latest `main` branch:
+
+```bash
+cd /opt/oration-spin-hub
+git pull origin main
+```
+
+### 4. Rebuild and restart the containers
+
+```bash
+docker compose -f compose.live.yaml up -d --build --force-recreate
+```
+
+### 5. Check logs and health
+
+```bash
+docker logs --tail=100 oration-spin-hub-api
+curl http://localhost:4000/health
+curl http://localhost:4000/api/health
+```
+
+### 6. If PostgreSQL changes
+
+If the database host, port, or password changes, update the `DATABASE_URL` in `compose.live.yaml`, rebuild the containers, and verify the backend logs again.
+
+### 7. If Nginx Proxy Manager changes
+
+If you change NPM routing or SSL, save the proxy host again and verify the public site after the container restart.
