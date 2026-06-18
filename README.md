@@ -62,6 +62,8 @@ If you are using Nginx Proxy Manager in Docker, do not forward the proxy host to
 
 For PostgreSQL on the same VPS, the backend container should use `host.docker.internal` with the `extra_hosts` mapping already in the compose file.
 
+If the backend logs show `ETIMEDOUT 10.0.0.1:5433`, the container can resolve the host gateway but PostgreSQL is not accepting connections there. Check that PostgreSQL is listening on `5433` on the VPS and that the firewall allows the port.
+
 The backend stores the connection string in the `backend_data` Docker volume, creates tables, and seeds the default users.
 
 ### Local Development
