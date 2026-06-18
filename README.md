@@ -18,7 +18,7 @@ Full-stack gamified spin wheel app for office employee selection, built with Nod
 
 ### Docker Compose
 
-Run the full stack with PostgreSQL, backend, and frontend:
+Run the frontend and backend containers against the live PostgreSQL database:
 
 ```bash
 docker compose up --build
@@ -26,15 +26,8 @@ docker compose up --build
 
 Frontend: `http://localhost:5173`
 Backend: `http://localhost:4000`
-PostgreSQL: internal Compose service `database:5432`
 
-Open a database shell with:
-
-```bash
-docker compose exec database psql -U postgres -d oration_spin_hub
-```
-
-The database schema is loaded from `database/schema.sql` on first startup, and the backend seeds demo users/employees before starting.
+The backend connects to the live PostgreSQL host configured in `compose.yaml`, loads the schema on first startup, and seeds demo users/employees before starting.
 
 To stop the stack:
 
@@ -71,16 +64,15 @@ The backend stores the connection string in the `backend_data` Docker volume, cr
 
 ### Local Development
 
-1. Create a PostgreSQL database.
-2. Copy environment files:
+1. Copy environment files:
 
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-3. Update `backend/.env` with your PostgreSQL connection details.
-4. Install dependencies and initialize the database:
+2. Update `backend/.env` with your PostgreSQL connection details only if you run the backend outside Docker.
+3. Install dependencies and initialize the database:
 
 ```bash
 npm run install:all

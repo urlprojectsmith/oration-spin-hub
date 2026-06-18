@@ -1,38 +1,12 @@
 services:
-  database:
-    image: postgres:16-alpine
-    container_name: oration-spin-hub-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: oration_spin_hub
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d oration_spin_hub"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-    networks:
-      app_net:
-        aliases:
-          - db
-          - database
-          - postgres
-
   backend:
     build:
       context: ./backend
     container_name: oration-spin-hub-api
     restart: unless-stopped
-    depends_on:
-      database:
-        condition: service_healthy
     environment:
       PORT: 4000
-      DATABASE_URL: postgres://postgres:postgres@db:5432/oration_spin_hub
+      DATABASE_URL: postgresql://oration_user:Oratuib-%40wp21@38.242.212.81:5433/oration_spin_hub
       JWT_SECRET: replace-with-a-long-random-secret
       JWT_EXPIRES_IN: 8h
       CORS_ORIGIN: http://localhost:5173,https://orationarena.urlfactory.website
@@ -47,8 +21,6 @@ services:
     ports:
       - "4000:4000"
     command: sh -c "node src/waitForDb.js && npm run seed && npm start"
-    networks:
-      app_net:
 
   frontend:
     build:
@@ -63,12 +35,3 @@ services:
     ports:
       - "5173:5173"
     command: npm run dev -- --host 0.0.0.0
-    networks:
-      app_net:
-
-volumes:
-  postgres_data:
-
-networks:
-  app_net:
-    driver: bridge
