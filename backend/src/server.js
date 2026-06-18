@@ -16,7 +16,8 @@ import webhookRoutes from './routes/webhookRoutes.js';
 import setupRoutes from './routes/setupRoutes.js';
 import { errorHandler, notFound } from './middleware/error.js';
 import { applyBaseSchema, ensureRuntimeSchema } from './config/migrations.js';
-import { hasDatabaseConfig, probeDatabase } from './config/db.js';
+import { getDatabaseState, hasDatabaseConfig, probeDatabase } from './config/db.js';
+import { seedDatabase } from './seed.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,https:
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+let databaseHealthTimer;
 
 async function bootstrapDatabase() {
   if (!hasDatabaseConfig()) {
@@ -42,6 +44,7 @@ async function bootstrapDatabase() {
   try {
     await applyBaseSchema();
     await ensureRuntimeSchema();
+    await seedDatabase();
     console.log('Database schema is ready.');
   } catch (error) {
     console.warn(`Database schema bootstrap failed: ${error.message}`);
@@ -49,11 +52,11 @@ async function bootstrapDatabase() {
 }
 
 async function handleHealthCheck(req, res) {
-  const probe = await probeDatabase(undefined, { connectionTimeoutMillis: 1000 });
+  const state = getDatabaseState();
   res.json({
     ok: true,
     service: 'oration-spin-hub-api',
-    database: probe.connected ? 'connected' : 'disconnected'
+    database: state.connected ? 'connected' : 'disconnected'
   });
 }
 
@@ -82,7 +85,30 @@ app.use(errorHandler);
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`oration-spin-hub-api listening on http://0.0.0.0:${port}`);
+  probeDatabase(undefined, { connectionTimeoutMillis: 1000 }).catch((error) => {
+    console.warn(`Initial database probe failed: ${error.message}`);
+  });
   bootstrapDatabase().catch((error) => {
     console.warn(`Database bootstrap failed: ${error.message}`);
   });
+  databaseHealthTimer = setInterval(() => {
+    probeDatabase(undefined, { connectionTimeoutMillis: 1000 }).catch((error) => {
+      console.warn(`Database probe failed: ${error.message}`);
+    });
+  }, Number(process.env.DB_HEALTH_CHECK_INTERVAL_MS || 30000));
+});
+
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, async () => {
+    if (databaseHealthTimer) clearInterval(databaseHealthTimer);
+    process.exit(0);
+  });
+}
+
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled rejection in backend process:', error);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception in backend process:', error);
 });

@@ -20,7 +20,7 @@ services:
       WEBEX_ROOM_ID:
     ports:
       - "4000:4000"
-    command: sh -c "node src/waitForDb.js && npm run seed && npm start"
+    command: npm start
 
   frontend:
     build:

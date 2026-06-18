@@ -23,6 +23,7 @@ services:
       - "4000:4000"
     volumes:
       - backend_data:/app/data
+    command: npm start
 
   frontend:
     build:
