@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 5173,
+      allowedHosts: ['orationarena.urlfactory.website', '38.242.212.81'],
       proxy: {
         '/api': {
           target: backendTarget,
