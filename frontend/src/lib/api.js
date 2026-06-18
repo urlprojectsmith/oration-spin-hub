@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://orationarena.urlfactory.website/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export function getToken() {
   return localStorage.getItem('oration_token');

@@ -31,7 +31,7 @@ services:
     depends_on:
       - backend
     environment:
-      VITE_API_URL: https://orationarena.urlfactory.website/api
+      VITE_API_URL: /api
     ports:
       - "5173:5173"
     command: npm run dev -- --host 0.0.0.0
