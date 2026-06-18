@@ -55,10 +55,12 @@ Open `http://localhost:5173` during local testing, or `https://orationarena.urlf
 Example URL:
 
 ```text
-postgres://db_user:db_password@your-postgres-host:5432/oration_spin_hub
+postgresql://oration_user:Oratuib-%40wp21@host.docker.internal:5433/oration_spin_hub
 ```
 
 If you are using Nginx Proxy Manager in Docker, do not forward the proxy host to `127.0.0.1` from inside NPM. Use the VPS host IP or a host-gateway address that can reach the published backend port, for example `38.242.212.81:4000` for `/api`.
+
+For PostgreSQL on the same VPS, the backend container should use `host.docker.internal` with the `extra_hosts` mapping already in the compose file.
 
 The backend stores the connection string in the `backend_data` Docker volume, creates tables, and seeds the default users.
 
