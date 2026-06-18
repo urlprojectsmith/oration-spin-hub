@@ -65,6 +65,8 @@ Example URL:
 postgres://db_user:db_password@your-postgres-host:5432/oration_spin_hub
 ```
 
+If you are using Nginx Proxy Manager in Docker, do not forward the proxy host to `127.0.0.1` from inside NPM. Use the VPS host IP or a host-gateway address that can reach the published backend port, for example `38.242.212.81:4000` for `/api`.
+
 The backend stores the connection string in the `backend_data` Docker volume, creates tables, and seeds the default users.
 
 ### Local Development
