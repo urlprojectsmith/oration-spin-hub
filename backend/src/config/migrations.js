@@ -1,4 +1,12 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { query } from './db.js';
+
+export async function applyBaseSchema() {
+  const schemaPath = process.env.SCHEMA_PATH || path.resolve(process.cwd(), 'schema.sql');
+  const schema = await fs.readFile(schemaPath, 'utf8');
+  await query(schema);
+}
 
 export async function ensureRuntimeSchema() {
   await query(`

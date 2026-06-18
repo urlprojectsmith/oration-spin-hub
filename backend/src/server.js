@@ -15,8 +15,8 @@ import eventRoutes from './routes/eventRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import setupRoutes from './routes/setupRoutes.js';
 import { errorHandler, notFound } from './middleware/error.js';
-import { ensureRuntimeSchema } from './config/migrations.js';
-import { hasDatabaseConfig } from './config/db.js';
+import { applyBaseSchema, ensureRuntimeSchema } from './config/migrations.js';
+import { hasDatabaseConfig, probeDatabase } from './config/db.js';
 
 dotenv.config();
 
@@ -27,13 +27,42 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,https:
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+async function bootstrapDatabase() {
+  if (!hasDatabaseConfig()) {
+    console.warn('Database setup is required: DATABASE_URL is not configured');
+    return;
+  }
+
+  const probe = await probeDatabase(undefined, { connectionTimeoutMillis: 1500 });
+  if (!probe.connected) {
+    console.warn(`Database setup is required: ${probe.error?.message || 'database not reachable'}`);
+    return;
+  }
+
+  try {
+    await applyBaseSchema();
+    await ensureRuntimeSchema();
+    console.log('Database schema is ready.');
+  } catch (error) {
+    console.warn(`Database schema bootstrap failed: ${error.message}`);
+  }
+}
+
+async function handleHealthCheck(req, res) {
+  const probe = await probeDatabase(undefined, { connectionTimeoutMillis: 1000 });
+  res.json({
+    ok: true,
+    service: 'oration-spin-hub-api',
+    database: probe.connected ? 'connected' : 'disconnected'
+  });
+}
+
 app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json());
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true, app: 'ORATION ARENA' });
-});
+app.get('/health', handleHealthCheck);
+app.get('/api/health', handleHealthCheck);
 
 app.use('/api/setup', setupRoutes);
 app.use('/api/auth', authRoutes);
@@ -51,16 +80,9 @@ app.use('/api/webhooks', webhookRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-if (hasDatabaseConfig()) {
-  try {
-    await ensureRuntimeSchema();
-  } catch (error) {
-    console.warn(`Database setup is required: ${error.message}`);
-  }
-} else {
-  console.warn('Database setup is required: DATABASE_URL is not configured');
-}
-
-app.listen(port, () => {
-  console.log(`ORATION ARENA API listening on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`oration-spin-hub-api listening on http://0.0.0.0:${port}`);
+  bootstrapDatabase().catch((error) => {
+    console.warn(`Database bootstrap failed: ${error.message}`);
+  });
 });

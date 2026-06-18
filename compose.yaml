@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: 4000
-      DATABASE_URL: postgresql://oration_user:Oratuib-%40wp21@host.docker.internal:5433/oration_spin_hub
+      DATABASE_URL: postgresql://oration_user:Oratuib-%40wp21@10.0.6.1:5433/oration_spin_hub
       JWT_SECRET: replace-with-a-long-random-secret
       JWT_EXPIRES_IN: 8h
       CORS_ORIGIN: http://localhost:5173,https://orationarena.urlfactory.website

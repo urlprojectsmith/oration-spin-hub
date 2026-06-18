@@ -1,7 +1,7 @@
 import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { configureDatabase, hasDatabaseConfig, query, testDatabaseConnection } from '../config/db.js';
+import { configureDatabase, hasDatabaseConfig, probeDatabase, query, testDatabaseConnection } from '../config/db.js';
 import { ensureRuntimeSchema } from '../config/migrations.js';
 import { seedDatabase } from '../seed.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -28,13 +28,13 @@ router.get('/status', asyncHandler(async (req, res) => {
     return res.json({ configured: false, ready: false, needsSetup: true });
   }
 
-  try {
-    await testDatabaseConnection();
-    const ready = await hasUsersTable();
-    res.json({ configured: true, ready, needsSetup: !ready });
-  } catch (error) {
-    res.json({ configured: true, ready: false, needsSetup: true, error: error.message });
+  const probe = await probeDatabase();
+  if (!probe.connected) {
+    return res.json({ configured: true, ready: false, needsSetup: true, error: probe.error?.message || 'database unavailable' });
   }
+
+  const ready = await hasUsersTable();
+  res.json({ configured: true, ready, needsSetup: !ready });
 }));
 
 router.post('/test-database', asyncHandler(async (req, res) => {

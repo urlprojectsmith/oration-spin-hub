@@ -60,9 +60,9 @@ postgresql://oration_user:Oratuib-%40wp21@host.docker.internal:5433/oration_spin
 
 If you are using Nginx Proxy Manager in Docker, do not forward the proxy host to `127.0.0.1` from inside NPM. Use the VPS host IP or a host-gateway address that can reach the published backend port, for example `38.242.212.81:4000` for `/api`.
 
-For PostgreSQL on the same VPS, the backend container should use `host.docker.internal` with the `extra_hosts` mapping already in the compose file.
+For PostgreSQL on the same VPS, the backend container uses the reachable gateway IP configured in compose: `10.0.6.1:5433`.
 
-If the backend logs show `ETIMEDOUT 10.0.0.1:5433`, the container can resolve the host gateway but PostgreSQL is not accepting connections there. Check that PostgreSQL is listening on `5433` on the VPS and that the firewall allows the port.
+If the backend logs show `ETIMEDOUT 10.0.6.1:5433`, PostgreSQL is not accepting connections there. Check that PostgreSQL is listening on `5433` on the VPS and that the firewall allows the port.
 
 The backend stores the connection string in the `backend_data` Docker volume, creates tables, and seeds the default users.
 
