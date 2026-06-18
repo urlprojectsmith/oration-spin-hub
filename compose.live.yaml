@@ -7,6 +7,7 @@ services:
     environment:
       PORT: 4000
       DATA_DIR: /app/data
+      DATABASE_URL: postgresql://oration_user:Oratuib-%40wp21@host.docker.internal:5433/oration_spin_hub
       JWT_SECRET: replace-with-a-long-random-secret
       JWT_EXPIRES_IN: 8h
       CORS_ORIGIN: http://localhost:5173,https://orationarena.urlfactory.website
@@ -22,6 +23,8 @@ services:
       - "4000:4000"
     volumes:
       - backend_data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build:
