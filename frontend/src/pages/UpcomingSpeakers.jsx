@@ -1,10 +1,12 @@
 import { CalendarDays, ChevronLeft, ChevronRight, Maximize2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader.jsx';
-import { api } from '../lib/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { api, canManage } from '../lib/api.js';
 
 const emptyForm = {
   event_date: '',
+  event_time: '',
   event_type: 'Oration Task',
   selected_speaker_id: '',
   status: 'Scheduled',
@@ -39,15 +41,19 @@ function buildCalendarDays(monthDate) {
 }
 
 export default function UpcomingSpeakers() {
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [monthDate, setMonthDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const manager = canManage(user.role);
 
   async function load() {
-    const [scheduleRows, employeeRows] = await Promise.all([api('/schedules'), api('/employees?status=active')]);
+    const requests = [api('/schedules')];
+    if (manager) requests.push(api('/employees?status=active'));
+    const [scheduleRows, employeeRows = []] = await Promise.all(requests);
     setSchedules(scheduleRows);
     setEmployees(employeeRows);
   }
@@ -71,15 +77,18 @@ export default function UpcomingSpeakers() {
     .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
 
   function openCreate(date = '') {
+    if (!manager) return;
     setEditingId(null);
     setForm({ ...emptyForm, event_date: date });
     setIsModalOpen(true);
   }
 
   function openEdit(item) {
+    if (!item.can_edit) return;
     setEditingId(item.id);
     setForm({
       event_date: toDateInput(item.event_date),
+      event_time: item.event_time ? item.event_time.slice(0, 5) : '',
       event_type: item.event_type || 'Oration Task',
       selected_speaker_id: item.selected_speaker_id || '',
       status: item.status || 'Scheduled',
@@ -99,6 +108,7 @@ export default function UpcomingSpeakers() {
   }
 
   async function remove(item) {
+    if (!item.can_delete) return;
     if (!confirm(`Delete speaker schedule for ${new Date(item.event_date).toLocaleDateString()}?`)) return;
     await api(`/schedules/${item.id}`, { method: 'DELETE' });
     await load();
@@ -125,10 +135,12 @@ export default function UpcomingSpeakers() {
               <Maximize2 size={16} />
               Full Screen Calendar
             </button>
-            <button className="primary-btn" onClick={() => openCreate()}>
-              <Plus size={16} />
-              Create Manually
-            </button>
+            {manager ? (
+              <button className="primary-btn" onClick={() => openCreate()}>
+                <Plus size={16} />
+                Create Manually
+              </button>
+            ) : null}
           </>
         }
       />
@@ -162,7 +174,7 @@ export default function UpcomingSpeakers() {
                 <button
                   className={`calendar-day ${isCurrentMonth ? '' : 'muted'} ${isToday ? 'today' : ''} ${isOrationDay ? 'oration-day' : ''} ${daySchedules.length ? 'has-speaker' : ''}`}
                   key={key}
-                  onClick={() => daySchedules[0] ? openEdit(daySchedules[0]) : openCreate(key)}
+                  onClick={() => daySchedules[0]?.can_edit ? openEdit(daySchedules[0]) : openCreate(key)}
                 >
                   <span className="date-number">{day.getDate()}</span>
                   {daySchedules.map((item) => (
@@ -190,12 +202,16 @@ export default function UpcomingSpeakers() {
                   <small>{item.event_type} · {item.status}</small>
                 </div>
                 <div className="card-actions">
-                  <button className="icon-btn" title="Edit" onClick={() => openEdit(item)}>
-                    <Pencil size={16} />
-                  </button>
-                  <button className="icon-btn" title="Delete" onClick={() => remove(item)}>
-                    <Trash2 size={16} />
-                  </button>
+                  {item.can_edit ? (
+                    <button className="icon-btn" title="Edit" onClick={() => openEdit(item)}>
+                      <Pencil size={16} />
+                    </button>
+                  ) : null}
+                  {item.can_delete ? (
+                    <button className="icon-btn" title="Delete" onClick={() => remove(item)}>
+                      <Trash2 size={16} />
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -219,15 +235,19 @@ export default function UpcomingSpeakers() {
             <div className="form-grid-2">
               <label>
                 Date
-                <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} required />
+                <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} required disabled={!manager} />
+              </label>
+              <label>
+                Time
+                <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })} disabled={!manager} />
               </label>
               <label>
                 Event Type
-                <input value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })} required />
+                <input value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })} required disabled={!manager} />
               </label>
               <label>
                 Speaker
-                <select value={form.selected_speaker_id} onChange={(e) => setForm({ ...form, selected_speaker_id: e.target.value })} required>
+                <select value={form.selected_speaker_id} onChange={(e) => setForm({ ...form, selected_speaker_id: e.target.value })} required disabled={!manager}>
                   <option value="">Select speaker</option>
                   {employees.map((employee) => (
                     <option key={employee.id} value={employee.id}>{employee.employee_name}</option>
@@ -259,4 +279,3 @@ export default function UpcomingSpeakers() {
     </>
   );
 }
-

@@ -5,6 +5,7 @@ import { reselectSpeaker, spinCoordinator, spinCustomWheel, spinSpeaker } from '
 import { sendSelectionNotifications } from '../services/notificationService.js';
 import { auditLog } from '../services/auditService.js';
 import { emitWebhookEvent } from '../services/webhookService.js';
+import { awardPoints } from '../services/gamificationService.js';
 
 const router = express.Router();
 router.use(authenticate, allowRoles('super_admin', 'admin'));
@@ -28,6 +29,14 @@ router.post('/speaker', asyncHandler(async (req, res) => {
   }
 
   await auditLog({ userId: req.user.id, action: 'spin_speaker', entityType: 'spin_result', entityId: result.result.id, metadata: { winner: result.winner.employee_name }, ip: req.ip });
+  await awardPoints({
+    employeeId: result.winner.id,
+    actionType: 'speaker',
+    sourceType: 'spin_result',
+    sourceId: result.result.id,
+    awardedBy: req.user.id,
+    metadata: { event_date: req.body.event_date || null, cycle_number: result.cycle?.cycle_number || null }
+  });
   await emitWebhookEvent('spin.speaker.selected', {
     winner: result.winner,
     cycle: result.cycle,
@@ -64,6 +73,14 @@ router.post('/speaker/reselect', asyncHandler(async (req, res) => {
     metadata: { winner: result.winner.employee_name, previous_result_id: req.body.previous_result_id },
     ip: req.ip
   });
+  await awardPoints({
+    employeeId: result.winner.id,
+    actionType: 'speaker',
+    sourceType: 'spin_result',
+    sourceId: result.result.id,
+    awardedBy: req.user.id,
+    metadata: { event_date: req.body.event_date || null, reselected: true, previous_result_id: req.body.previous_result_id }
+  });
   await emitWebhookEvent('spin.speaker.reselected', {
     winner: result.winner,
     cycle: result.cycle,
@@ -81,6 +98,16 @@ router.post('/coordinator', asyncHandler(async (req, res) => {
     notes: req.body.notes
   });
   await auditLog({ userId: req.user.id, action: 'spin_coordinator', entityType: 'spin_result', metadata: { winners: result.winners.map((item) => item.employee_name) }, ip: req.ip });
+  for (const winner of result.winners) {
+    await awardPoints({
+      employeeId: winner.id,
+      actionType: 'coordinator',
+      sourceType: 'coordinator_batch',
+      sourceId: result.batchId,
+      awardedBy: req.user.id,
+      metadata: { batch_id: result.batchId }
+    });
+  }
   await emitWebhookEvent('spin.coordinator.selected', {
     winners: result.winners,
     batchId: result.batchId,

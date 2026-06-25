@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import path from 'node:path';
 import authRoutes from './routes/authRoutes.js';
 import employeeRoutes from './routes/employeeRoutes.js';
 import spinRoutes from './routes/spinRoutes.js';
@@ -14,6 +15,13 @@ import userRoutes from './routes/userRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import setupRoutes from './routes/setupRoutes.js';
+import preparationRoutes from './routes/preparationRoutes.js';
+import topicRoutes from './routes/topicRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
+import quizRoutes from './routes/quizRoutes.js';
+import feedbackRoutes from './routes/feedbackRoutes.js';
+import gamificationRoutes from './routes/gamificationRoutes.js';
+import advancedEventRoutes from './routes/advancedEventRoutes.js';
 import { errorHandler, notFound } from './middleware/error.js';
 import { applyBaseSchema, ensureRuntimeSchema } from './config/migrations.js';
 import { getDatabaseState, hasDatabaseConfig, probeDatabase } from './config/db.js';
@@ -23,6 +31,7 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;
+const dataDir = process.env.DATA_DIR || path.resolve(process.cwd(), 'data');
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,https://orationarena.urlfactory.website')
   .split(',')
   .map((origin) => origin.trim())
@@ -63,6 +72,7 @@ async function handleHealthCheck(req, res) {
 app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
+app.use('/resources', express.static(path.join(dataDir, 'event-resources')));
 
 app.get('/health', handleHealthCheck);
 app.get('/api/health', handleHealthCheck);
@@ -78,6 +88,13 @@ app.use('/api/history', historyRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/advanced-events', advancedEventRoutes);
+app.use('/api/preparation', preparationRoutes);
+app.use('/api/topics', topicRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/quizzes', quizRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/gamification', gamificationRoutes);
 app.use('/api/webhooks', webhookRoutes);
 
 app.use(notFound);
