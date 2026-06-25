@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 dotenv.config();
 
+const seedPassword = process.env.SEED_USER_PASSWORD || 'Oration@2026!';
+
 const users = [
   ['Super Admin', 'superadmin@oration.local', 'super_admin'],
   ['Admin User', 'admin@oration.local', 'admin'],
@@ -27,14 +29,14 @@ const employees = [
 ];
 
 export async function seedDatabase() {
-  const passwordHash = await bcrypt.hash('Password@123', 10);
+  const passwordHash = await bcrypt.hash(seedPassword, 10);
 
   for (const [name, email, role] of users) {
     await query(
       `INSERT INTO users (name, email, password_hash, role)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (email)
-       DO UPDATE SET name = EXCLUDED.name, role = EXCLUDED.role, password_hash = EXCLUDED.password_hash`,
+       DO UPDATE SET name = EXCLUDED.name, role = EXCLUDED.role`,
       [name, email, passwordHash, role]
     );
   }
@@ -82,6 +84,6 @@ export async function seedDatabase() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await seedDatabase();
-  console.log('Seed complete. Login password for all seed users: Password@123');
+  console.log(`Seed complete. New seed users use password: ${seedPassword}`);
   await getPool().end();
 }

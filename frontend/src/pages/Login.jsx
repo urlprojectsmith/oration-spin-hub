@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 export default function Login() {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: 'superadmin@oration.local', password: 'Password@123' });
+  const [form, setForm] = useState({ email: 'superadmin@oration.local', password: 'Oration@2026!' });
   const [error, setError] = useState('');
 
   async function submit(event) {

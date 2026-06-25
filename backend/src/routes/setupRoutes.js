@@ -57,10 +57,9 @@ router.post('/sync-database', asyncHandler(async (req, res) => {
     message: 'Database synced and seed data created',
     login: {
       email: 'superadmin@oration.local',
-      password: 'Password@123'
+      password: process.env.SEED_USER_PASSWORD || 'Oration@2026!'
     }
   });
 }));
 
 export default router;
-

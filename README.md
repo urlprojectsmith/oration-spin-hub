@@ -96,11 +96,17 @@ Backend: `http://localhost:4000`
 
 ## Seed Logins
 
-All seed users use password `Password@123`.
+New seed users use password `Oration@2026!` unless `SEED_USER_PASSWORD` is set. Existing user passwords are preserved when the app starts.
 
 - Super Admin: `superadmin@oration.local`
 - Admin: `admin@oration.local`
 - User: `user@oration.local`
+
+To force-reset the super admin password:
+
+```bash
+SUPER_ADMIN_PASSWORD='Oration@2026!' npm run reset:super-admin --prefix backend
+```
 
 ## Event Banner And Webhook APIs
 
