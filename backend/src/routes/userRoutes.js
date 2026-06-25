@@ -53,10 +53,10 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
-  await query(`DELETE FROM users WHERE id = $1 AND id <> $2`, [req.params.id, req.user.id]);
+  const result = await query(`DELETE FROM users WHERE id = $1 AND id <> $2`, [req.params.id, req.user.id]);
+  if (!result.rowCount) return res.status(400).json({ message: 'You cannot delete your own account' });
   await auditLog({ userId: req.user.id, action: 'delete_user', entityType: 'user', entityId: req.params.id, ip: req.ip });
   res.status(204).send();
 }));
 
 export default router;
-

@@ -70,6 +70,7 @@ button {
   border-right: 1px solid var(--line);
   background: rgba(6, 8, 20, 0.74);
   backdrop-filter: blur(18px);
+  overflow: hidden;
 }
 
 .brand,
@@ -123,6 +124,17 @@ small,
 nav {
   display: grid;
   gap: 8px;
+}
+
+.sidebar nav {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: none;
+}
+
+.sidebar nav::-webkit-scrollbar {
+  display: none;
 }
 
 nav a {
@@ -225,6 +237,12 @@ nav a.active {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.row-actions button.danger-btn {
+  color: #ffdbe0;
+  border-color: rgba(255, 97, 116, 0.35);
+  background: rgba(255, 97, 116, 0.12);
+}
+
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -293,6 +311,11 @@ button:disabled {
 .spin-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.8fr);
+  gap: 18px;
+}
+
+.user-management-stack {
+  display: grid;
   gap: 18px;
 }
 
@@ -641,6 +664,26 @@ table {
   width: 100%;
   border-collapse: collapse;
   min-width: 720px;
+}
+
+.users-table {
+  min-width: 920px;
+}
+
+.users-table th:last-child,
+.users-table td:last-child {
+  width: 160px;
+}
+
+.user-actions {
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.user-actions button {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
 }
 
 th,
@@ -1333,6 +1376,14 @@ th {
   width: min(780px, 100%);
   display: grid;
   gap: 14px;
+}
+
+.user-modal {
+  width: min(520px, 100%);
+}
+
+.user-modal h2 {
+  margin: 4px 0 0;
 }
 
 .modal-header {
@@ -2128,6 +2179,7 @@ th {
   .sidebar {
     position: static;
     height: auto;
+    max-height: 80vh;
   }
 
   .main {
